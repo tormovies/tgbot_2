@@ -1,29 +1,31 @@
 <?php
 /**
- * Вызовы Telegram Bot API.
+ * Вызовы Telegram Bot API. Совместимость: PHP 5.6+
  */
 class Telegram
 {
-    private string $base = 'https://api.telegram.org/bot';
+    private $base = 'https://api.telegram.org/bot';
+    private $token;
 
-    public function __construct(private string $token)
+    public function __construct($token)
     {
+        $this->token = $token;
     }
 
-    private function request(string $method, array $params = [], bool $get = false): array
+    private function request($method, $params = array(), $get = false)
     {
         $url = $this->base . $this->token . '/' . $method;
-        if ($get && $params !== []) {
+        if ($get && $params !== array()) {
             $url .= '?' . http_build_query($params);
         }
         $ch = curl_init($url);
-        $opts = [CURLOPT_RETURNTRANSFER => true];
+        $opts = array(CURLOPT_RETURNTRANSFER => true);
         if ($get) {
             $opts[CURLOPT_HTTPGET] = true;
         } else {
             $opts[CURLOPT_POST] = true;
             $opts[CURLOPT_POSTFIELDS] = json_encode($params);
-            $opts[CURLOPT_HTTPHEADER] = ['Content-Type: application/json'];
+            $opts[CURLOPT_HTTPHEADER] = array('Content-Type: application/json');
         }
         curl_setopt_array($ch, $opts);
         $body = curl_exec($ch);
@@ -34,26 +36,25 @@ class Telegram
         }
         $data = json_decode($body, true);
         if (!$data['ok']) {
-            throw new RuntimeException("Telegram API: " . ($data['description'] ?? $body));
+            $desc = isset($data['description']) ? $data['description'] : $body;
+            throw new RuntimeException("Telegram API: " . $desc);
         }
         return $data;
     }
 
-    /** Long polling: получить обновления. $offset — следующий update_id. */
-    public function getUpdates(?int $offset = null, int $timeout = 30): array
+    public function getUpdates($offset = null, $timeout = 30)
     {
-        $params = ['timeout' => $timeout];
+        $params = array('timeout' => $timeout);
         if ($offset !== null) {
             $params['offset'] = $offset;
         }
         $result = $this->request('getUpdates', $params, true);
-        return $result['result'] ?? [];
+        return isset($result['result']) ? $result['result'] : array();
     }
 
-    /** Отправить сообщение в чат (личка или группа). $parseMode — '' (текст) или 'HTML'. */
-    public function sendMessage(int $chatId, string $text, string $parseMode = ''): array
+    public function sendMessage($chatId, $text, $parseMode = '')
     {
-        $params = ['chat_id' => $chatId, 'text' => $text];
+        $params = array('chat_id' => $chatId, 'text' => $text);
         if ($parseMode !== '') {
             $params['parse_mode'] = $parseMode;
         }

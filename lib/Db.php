@@ -1,12 +1,12 @@
 <?php
 /**
- * SQLite: логи запросов/ответов и состояние "ожидаю текст сна".
+ * SQLite: логи запросов/ответов и состояние "ожидаю текст сна". Совместимость: PHP 5.6+
  */
 class Db
 {
-    private static ?PDO $pdo = null;
+    private static $pdo = null;
 
-    public static function get(): PDO
+    public static function get()
     {
         if (self::$pdo === null) {
             $dir = defined('DATA_DIR') ? DATA_DIR : (__DIR__ . '/../data');
@@ -21,7 +21,7 @@ class Db
         return self::$pdo;
     }
 
-    private static function migrate(): void
+    private static function migrate()
     {
         $pdo = self::$pdo;
         $pdo->exec("
@@ -46,29 +46,28 @@ class Db
         ");
     }
 
-    /** Ждём текст сна от пользователя в этом чате */
-    public static function setWaiting(int $userId, int $chatId): void
+    public static function setWaiting($userId, $chatId)
     {
         $pdo = self::get();
-        $pdo->prepare("REPLACE INTO state (user_id, chat_id, created_at) VALUES (?, ?, datetime('now'))")
-            ->execute([$userId, $chatId]);
+        $st = $pdo->prepare("REPLACE INTO state (user_id, chat_id, created_at) VALUES (?, ?, datetime('now'))");
+        $st->execute(array($userId, $chatId));
     }
 
-    public static function isWaiting(int $userId, int $chatId): bool
+    public static function isWaiting($userId, $chatId)
     {
         $pdo = self::get();
         $st = $pdo->prepare("SELECT 1 FROM state WHERE user_id = ? AND chat_id = ?");
-        $st->execute([$userId, $chatId]);
+        $st->execute(array($userId, $chatId));
         return (bool) $st->fetchColumn();
     }
 
-    public static function clearWaiting(int $userId, int $chatId): void
+    public static function clearWaiting($userId, $chatId)
     {
         self::get()->prepare("DELETE FROM state WHERE user_id = ? AND chat_id = ?")
-            ->execute([$userId, $chatId]);
+            ->execute(array($userId, $chatId));
     }
 
-    private const LOGS_TABLE_SCHEMA = "
+    private static $LOGS_TABLE_SCHEMA = "
         CREATE TABLE %s (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -81,13 +80,13 @@ class Db
         )
     ";
 
-    public static function addLog(int $userId, ?string $username, int $chatId, string $chatType, string $dreamText, string $interpretation): void
+    public static function addLog($userId, $username, $chatId, $chatType, $dreamText, $interpretation)
     {
         $pdo = self::get();
         $pdo->prepare("
             INSERT INTO logs (user_id, username, chat_id, chat_type, dream_text, interpretation, created_at)
             VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-        ")->execute([$userId, $username, $chatId, $chatType, $dreamText, $interpretation]);
+        ")->execute(array($userId, $username, $chatId, $chatType, $dreamText, $interpretation));
 
         $limit = defined('LOGS_ARCHIVE_AFTER') ? (int) LOGS_ARCHIVE_AFTER : 0;
         if ($limit > 0) {
@@ -98,33 +97,31 @@ class Db
         }
     }
 
-    /** Переименовать logs в архивную таблицу и создать новую пустую logs. */
-    private static function rotateLogsTable(PDO $pdo): void
+    private static function rotateLogsTable($pdo)
     {
         $archiveName = 'logs_archive_' . date('Ymd_His');
         $pdo->exec("ALTER TABLE logs RENAME TO " . self::safeTableName($archiveName));
-        $pdo->exec(sprintf(self::LOGS_TABLE_SCHEMA, 'logs'));
+        $pdo->exec(sprintf(self::$LOGS_TABLE_SCHEMA, 'logs'));
     }
 
-    private static function safeTableName(string $name): string
+    private static function safeTableName($name)
     {
-        return preg_replace('/[^a-zA-Z0-9_]/', '', $name) ?: 'logs_archive';
+        $s = preg_replace('/[^a-zA-Z0-9_]/', '', $name);
+        return $s !== '' ? $s : 'logs_archive';
     }
 
-    /** Имена таблиц логов: logs (текущая) + logs_archive_* (по убыванию даты в имени). */
-    public static function getLogTableNames(): array
+    public static function getLogTableNames()
     {
         $pdo = self::get();
         $st = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND (name='logs' OR name LIKE 'logs_archive_%') ORDER BY name DESC");
-        $out = [];
+        $out = array();
         while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
             $out[] = $row['name'];
         }
         return $out;
     }
 
-    /** Список логов из указанной таблицы, новые сверху. */
-    public static function getLogs(int $limit = 200, string $table = 'logs'): array
+    public static function getLogs($limit = 200, $table = 'logs')
     {
         $table = self::safeTableName($table);
         $pdo = self::get();
@@ -132,7 +129,7 @@ class Db
             SELECT id, user_id, username, chat_id, chat_type, dream_text, interpretation, created_at
             FROM " . $table . " ORDER BY id DESC LIMIT ?
         ");
-        $st->execute([$limit]);
+        $st->execute(array($limit));
         return $st->fetchAll(PDO::FETCH_ASSOC);
     }
 }

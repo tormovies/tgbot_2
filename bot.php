@@ -2,8 +2,8 @@
 /**
  * Запуск: php bot.php
  * Держит long polling, обрабатывает /son и текст сна, ответ в личку.
+ * Совместимость: PHP 5.6+
  */
-declare(strict_types=1);
 
 $config = __DIR__ . '/config.php';
 if (!is_file($config)) {
@@ -24,24 +24,24 @@ echo "Бот запущен. Ожидание сообщений...\n";
 while (true) {
     try {
         $updates = $tg->getUpdates($offset, 30);
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         echo date('Y-m-d H:i:s') . " getUpdates error: " . $e->getMessage() . "\n";
         sleep(5);
         continue;
     }
 
     foreach ($updates as $u) {
-        $offset = ($u['update_id'] ?? 0) + 1;
-        $msg = $u['message'] ?? null;
+        $offset = (isset($u['update_id']) ? $u['update_id'] : 0) + 1;
+        $msg = isset($u['message']) ? $u['message'] : null;
         if (!$msg) {
             continue;
         }
 
         $chatId = (int) $msg['chat']['id'];
-        $chatType = $msg['chat']['type'] ?? 'private';
-        $userId = (int) ($msg['from']['id'] ?? 0);
-        $username = $msg['from']['username'] ?? null;
-        $text = trim((string) ($msg['text'] ?? ''));
+        $chatType = isset($msg['chat']['type']) ? $msg['chat']['type'] : 'private';
+        $userId = (int) (isset($msg['from']['id']) ? $msg['from']['id'] : 0);
+        $username = isset($msg['from']['username']) ? $msg['from']['username'] : null;
+        $text = trim((string) (isset($msg['text']) ? $msg['text'] : ''));
 
         try {
             if (Db::isWaiting($userId, $chatId)) {
@@ -73,7 +73,7 @@ while (true) {
                     $tg->sendMessage($chatId, defined('BOT_MSG_START') ? BOT_MSG_START : 'Привет. Чтобы расшифровать сон, отправь команду /son и затем опиши сон следующим сообщением.');
                 }
             }
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             echo date('Y-m-d H:i:s') . " [ОШИБКА] " . $e->getMessage() . "\n";
             $tg->sendMessage($chatId, defined('BOT_MSG_ERROR') ? BOT_MSG_ERROR : 'Произошла ошибка, попробуй позже.');
         }
