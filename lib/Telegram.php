@@ -52,13 +52,43 @@ class Telegram
         return isset($result['result']) ? $result['result'] : array();
     }
 
+    const MAX_MESSAGE_LENGTH = 4096;
+
     public function sendMessage($chatId, $text, $parseMode = '')
     {
         $text = str_replace("\\n", "\n", $text);
-        $params = array('chat_id' => $chatId, 'text' => $text);
-        if ($parseMode !== '') {
-            $params['parse_mode'] = $parseMode;
+        $chunks = $this->splitText($text, self::MAX_MESSAGE_LENGTH);
+        $last = null;
+        foreach ($chunks as $chunk) {
+            $params = array('chat_id' => $chatId, 'text' => $chunk);
+            if ($parseMode !== '') {
+                $params['parse_mode'] = $parseMode;
+            }
+            $last = $this->request('sendMessage', $params);
         }
-        return $this->request('sendMessage', $params);
+        return $last;
+    }
+
+    private function splitText($text, $maxLen)
+    {
+        if (mb_strlen($text) <= $maxLen) {
+            return array($text);
+        }
+        $chunks = array();
+        $rest = $text;
+        while (mb_strlen($rest) > 0) {
+            if (mb_strlen($rest) <= $maxLen) {
+                $chunks[] = $rest;
+                break;
+            }
+            $part = mb_substr($rest, 0, $maxLen);
+            $lastNewline = mb_strrpos($part, "\n");
+            if ($lastNewline !== false && $lastNewline > $maxLen / 2) {
+                $part = mb_substr($part, 0, $lastNewline + 1);
+            }
+            $chunks[] = $part;
+            $rest = mb_substr($rest, mb_strlen($part));
+        }
+        return $chunks;
     }
 }

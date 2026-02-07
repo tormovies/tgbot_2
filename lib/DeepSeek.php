@@ -17,6 +17,20 @@ class DeepSeek
      */
     public function ask($userContent, $promptKey = 'tolkovanie')
     {
+        foreach (array(0, 1) as $attempt) {
+            $content = $this->doRequest($userContent, $promptKey);
+            if ($content !== null && trim($content) !== '') {
+                return trim($content);
+            }
+            if ($attempt === 1) {
+                throw new RuntimeException("DeepSeek: no content in response");
+            }
+            sleep(2);
+        }
+    }
+
+    private function doRequest($userContent, $promptKey)
+    {
         $systemPrompt = $this->getSystemPrompt($promptKey);
         $body = array(
             'model' => 'deepseek-chat',
@@ -49,11 +63,7 @@ class DeepSeek
         }
 
         $data = json_decode($response, true);
-        $content = isset($data['choices'][0]['message']['content']) ? $data['choices'][0]['message']['content'] : null;
-        if ($content === null) {
-            throw new RuntimeException("DeepSeek: no content in response");
-        }
-        return trim($content);
+        return isset($data['choices'][0]['message']['content']) ? $data['choices'][0]['message']['content'] : null;
     }
 
     /** Промпт по ключу: DEEPSEEK_PROMPTS[$key], иначе дефолт для И-Цзин. */
