@@ -54,6 +54,7 @@ class Telegram
 
     public function sendMessage($chatId, $text, $parseMode = '')
     {
+        $text = str_replace("\\n", "\n", $text);
         $params = array('chat_id' => $chatId, 'text' => $text);
         if ($parseMode !== '') {
             $params['parse_mode'] = $parseMode;
