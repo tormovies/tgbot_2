@@ -35,7 +35,7 @@ class DeepSeek
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey,
             ),
-            CURLOPT_TIMEOUT => 60,
+            CURLOPT_TIMEOUT => 360,  // DeepSeek может отвечать 3–5 минут
         ));
         $response = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
