@@ -8,6 +8,9 @@
 define('BOT_TOKEN', '');           // Токен от @BotFather
 define('DEEPSEEK_API_KEY', '');   // Ключ API DeepSeek (обязательно)
 
+// Лимит токенов в ответе DeepSeek (0 = без лимита). Меньше = быстрее ответ.
+define('DEEPSEEK_MAX_TOKENS', 800);
+
 /**
  * Промпты для DeepSeek по командам.
  * Ключи: gadat, vopros, nomer, tolkovanie

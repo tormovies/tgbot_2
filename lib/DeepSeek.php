@@ -25,6 +25,9 @@ class DeepSeek
                 array('role' => 'user', 'content' => $userContent),
             ),
         );
+        if (defined('DEEPSEEK_MAX_TOKENS') && DEEPSEEK_MAX_TOKENS > 0) {
+            $body['max_tokens'] = (int) DEEPSEEK_MAX_TOKENS;
+        }
 
         $ch = curl_init(self::URL);
         curl_setopt_array($ch, array(
