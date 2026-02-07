@@ -1,8 +1,8 @@
 <?php
 /**
+ * Книга перемен — бот для толкования по И-Цзин.
  * Запуск: php bot.php
- * Держит long polling, обрабатывает /son и текст сна, ответ в личку.
- * Совместимость: PHP 5.6+
+ * Команды: /gadat, /vopros, /nomer, /tolkovanie, /spravka
  */
 
 $config = __DIR__ . '/config.php';
@@ -44,41 +44,108 @@ while (true) {
         $text = trim((string) (isset($msg['text']) ? $msg['text'] : ''));
 
         try {
+            // Обработка ожидаемого ввода
             if (Db::isWaiting($userId, $chatId)) {
                 $waitKey = Db::getWaitingCommandKey($userId, $chatId);
                 if ($text === '') {
-                    $msgSend = ($waitKey === 'peremen' && defined('BOT_MSG_SEND_PEREMEN')) ? BOT_MSG_SEND_PEREMEN : (defined('BOT_MSG_SEND_DREAM') ? BOT_MSG_SEND_DREAM : 'Пришли текст одним сообщением.');
-                    $tg->sendMessage($chatId, $msgSend);
+                    $msgMap = array(
+                        'vopros' => 'BOT_MSG_SEND_VOPROS',
+                        'tolkovanie' => 'BOT_MSG_SEND_TOLKOVANIE',
+                        'nomer' => 'BOT_MSG_SEND_NOMER',
+                    );
+                    $key = isset($msgMap[$waitKey]) ? $msgMap[$waitKey] : 'BOT_MSG_SEND_VOPROS';
+                    $tg->sendMessage($chatId, defined($key) ? constant($key) : 'Пришли текст одним сообщением.');
                     continue;
                 }
+
                 $commandKey = Db::getWaitingCommandKey($userId, $chatId);
                 Db::clearWaiting($userId, $chatId);
-                $dreamText = $text;
-                echo date('Y-m-d H:i:s') . " [OK] Текст от user_id=$userId (команда=$commandKey), отправка в DeepSeek...\n";
-                $interpretation = $deepseek->interpretDream($dreamText, $commandKey !== false ? $commandKey : 'son');
+
+                if ($commandKey === 'nomer') {
+                    $num = (int) $text;
+                    if ($num < 1 || $num > 64) {
+                        $tg->sendMessage($chatId, defined('BOT_MSG_NOMER_INVALID') ? BOT_MSG_NOMER_INVALID : 'Номер должен быть от 1 до 64.');
+                        continue;
+                    }
+                    $userContent = "Гексаграмма №{$num}";
+                    $dreamText = "nomer {$num}";
+                } elseif ($commandKey === 'vopros') {
+                    $hexNum = mt_rand(1, 64);
+                    $userContent = "Вопрос: {$text}\n\nВыпала гексаграмма №{$hexNum}.";
+                    $dreamText = "[вопрос] {$text} (гексаграмма {$hexNum})";
+                } else {
+                    $userContent = $text;
+                    $dreamText = $text;
+                }
+
+                echo date('Y-m-d H:i:s') . " [OK] user_id=$userId (команда=$commandKey), DeepSeek...\n";
+                $interpretation = $deepseek->ask($userContent, $commandKey);
                 Db::addLog($userId, $username, $chatId, $chatType, $dreamText, $interpretation);
-                // Ответ только в личку
                 $tg->sendMessage($userId, $interpretation);
-                // В группе — короткое уведомление
                 if ($chatId !== $userId) {
-                    $tg->sendMessage($chatId, defined('BOT_MSG_SENT_TO_DM') ? BOT_MSG_SENT_TO_DM : 'Расшифровка отправлена тебе в личные сообщения.');
+                    $tg->sendMessage($chatId, defined('BOT_MSG_SENT_TO_DM') ? BOT_MSG_SENT_TO_DM : 'Толкование отправлено в личные сообщения.');
                 }
                 continue;
             }
 
-            if ($text === '/peremen') {
-                echo date('Y-m-d H:i:s') . " [OK] Команда /peremen от user_id=$userId\n";
-                Db::setWaiting($userId, $chatId, 'peremen');
-                $tg->sendMessage($chatId, defined('BOT_MSG_AFTER_PEREMEN') ? BOT_MSG_AFTER_PEREMEN : 'Опиши ситуацию или перемены в следующем сообщении.');
-            } elseif ($text === '/son' || $text === '/start') {
-                if ($text === '/son') {
-                    echo date('Y-m-d H:i:s') . " [OK] Команда /son от user_id=$userId\n";
-                    Db::setWaiting($userId, $chatId, 'son');
-                    $tg->sendMessage($chatId, defined('BOT_MSG_AFTER_SON') ? BOT_MSG_AFTER_SON : 'Опиши сон в следующем сообщении.');
-                } else {
-                    $tg->sendMessage($chatId, defined('BOT_MSG_START') ? BOT_MSG_START : 'Привет. Команды: /son — сон, /peremen — перемены.');
-                }
+            // Команды
+            if ($text === '/start') {
+                $tg->sendMessage($chatId, defined('BOT_MSG_START') ? BOT_MSG_START : 'Привет. /spravka — список команд.');
+                continue;
             }
+            if ($text === '/spravka') {
+                $tg->sendMessage($chatId, defined('BOT_MSG_SPRAVKA') ? BOT_MSG_SPRAVKA : '/gadat, /vopros, /nomer, /tolkovanie');
+                continue;
+            }
+
+            if ($text === '/gadat') {
+                $hexNum = mt_rand(1, 64);
+                echo date('Y-m-d H:i:s') . " [OK] /gadat от user_id=$userId, выпало №{$hexNum}\n";
+                $userContent = "Выпала гексаграмма №{$hexNum}.";
+                $interpretation = $deepseek->ask($userContent, 'gadat');
+                Db::addLog($userId, $username, $chatId, $chatType, "gadat (гексаграмма {$hexNum})", $interpretation);
+                $tg->sendMessage($userId, $interpretation);
+                if ($chatId !== $userId) {
+                    $tg->sendMessage($chatId, defined('BOT_MSG_SENT_TO_DM') ? BOT_MSG_SENT_TO_DM : 'Толкование отправлено в личные сообщения.');
+                }
+                continue;
+            }
+
+            if (preg_match('/^\/nomer\s+(\d+)$/i', $text, $m)) {
+                $num = (int) $m[1];
+                if ($num < 1 || $num > 64) {
+                    $tg->sendMessage($chatId, defined('BOT_MSG_NOMER_INVALID') ? BOT_MSG_NOMER_INVALID : 'Номер должен быть от 1 до 64.');
+                    continue;
+                }
+                echo date('Y-m-d H:i:s') . " [OK] /nomer {$num} от user_id=$userId\n";
+                $userContent = "Гексаграмма №{$num}";
+                $interpretation = $deepseek->ask($userContent, 'nomer');
+                Db::addLog($userId, $username, $chatId, $chatType, "nomer {$num}", $interpretation);
+                $tg->sendMessage($userId, $interpretation);
+                if ($chatId !== $userId) {
+                    $tg->sendMessage($chatId, defined('BOT_MSG_SENT_TO_DM') ? BOT_MSG_SENT_TO_DM : 'Толкование отправлено в личные сообщения.');
+                }
+                continue;
+            }
+
+            if ($text === '/nomer') {
+                Db::setWaiting($userId, $chatId, 'nomer');
+                $tg->sendMessage($chatId, defined('BOT_MSG_AFTER_NOMER') ? BOT_MSG_AFTER_NOMER : 'Напиши номер гексаграммы (1–64).');
+                continue;
+            }
+
+            if ($text === '/vopros') {
+                Db::setWaiting($userId, $chatId, 'vopros');
+                $tg->sendMessage($chatId, defined('BOT_MSG_AFTER_VOPROS') ? BOT_MSG_AFTER_VOPROS : 'Напиши свой вопрос в следующем сообщении.');
+                continue;
+            }
+
+            if ($text === '/tolkovanie') {
+                Db::setWaiting($userId, $chatId, 'tolkovanie');
+                $tg->sendMessage($chatId, defined('BOT_MSG_AFTER_TOLKOVANIE') ? BOT_MSG_AFTER_TOLKOVANIE : 'Опиши сон, ситуацию или символы в следующем сообщении.');
+                continue;
+            }
+
         } catch (Exception $e) {
             echo date('Y-m-d H:i:s') . " [ОШИБКА] " . $e->getMessage() . "\n";
             $tg->sendMessage($chatId, defined('BOT_MSG_ERROR') ? BOT_MSG_ERROR : 'Произошла ошибка, попробуй позже.');

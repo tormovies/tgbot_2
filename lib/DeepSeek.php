@@ -13,16 +13,16 @@ class DeepSeek
     }
 
     /**
-     * Запрос к DeepSeek. $promptKey — ключ команды (son, mood, …), по нему выбирается системный промпт из конфига.
+     * Запрос к DeepSeek. $userContent — текст пользователя, $promptKey — ключ команды (gadat, vopros, nomer, tolkovanie).
      */
-    public function interpretDream($dreamText, $promptKey = 'son')
+    public function ask($userContent, $promptKey = 'tolkovanie')
     {
         $systemPrompt = $this->getSystemPrompt($promptKey);
         $body = array(
             'model' => 'deepseek-chat',
             'messages' => array(
                 array('role' => 'system', 'content' => $systemPrompt),
-                array('role' => 'user', 'content' => $dreamText),
+                array('role' => 'user', 'content' => $userContent),
             ),
         );
 
@@ -53,7 +53,7 @@ class DeepSeek
         return trim($content);
     }
 
-    /** Промпт по ключу команды: DEEPSEEK_PROMPTS[$key] или DEEPSEEK_SYSTEM_PROMPT для 'son', иначе дефолт. */
+    /** Промпт по ключу: DEEPSEEK_PROMPTS[$key], иначе дефолт для И-Цзин. */
     private function getSystemPrompt($promptKey)
     {
         $prompts = isset($GLOBALS['DEEPSEEK_PROMPTS']) && is_array($GLOBALS['DEEPSEEK_PROMPTS'])
@@ -62,9 +62,6 @@ class DeepSeek
         if (isset($prompts[$promptKey]) && $prompts[$promptKey] !== '') {
             return $prompts[$promptKey];
         }
-        if ($promptKey === 'son' && defined('DEEPSEEK_SYSTEM_PROMPT') && DEEPSEEK_SYSTEM_PROMPT !== '') {
-            return DEEPSEEK_SYSTEM_PROMPT;
-        }
-        return 'Ты толкователь снов. Дай краткую и понятную расшифровку сна на русском языке. Пиши по делу, без лишних вступлений.';
+        return 'Ты толкователь по «Книге перемен» (И-Цзин). Дай развёрнутое толкование на русском, в духе классического И-Цзин.';
     }
 }

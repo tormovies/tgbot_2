@@ -32,7 +32,7 @@ if (!empty($_SESSION['admin'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход — Админка бота</title>
+    <title>Вход — Книга перемен</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: sans-serif; max-width: 320px; margin: 3rem auto; padding: 0 1rem; }
@@ -44,7 +44,7 @@ if (!empty($_SESSION['admin'])) {
     </style>
 </head>
 <body>
-    <h1>Вход в админку</h1>
+    <h1>Вход — Книга перемен</h1>
     <?php if ($error): ?><p class="error"><?= htmlspecialchars($error) ?></p><?php endif; ?>
     <form method="post">
         <label>Логин</label>

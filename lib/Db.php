@@ -1,6 +1,6 @@
 <?php
 /**
- * SQLite: логи запросов/ответов и состояние "ожидаю текст сна". Совместимость: PHP 5.6+
+ * SQLite: логи запросов/ответов и состояние ожидания ввода. Совместимость: PHP 5.6+
  */
 class Db
 {
@@ -51,7 +51,7 @@ class Db
         }
     }
 
-    public static function setWaiting($userId, $chatId, $commandKey = 'son')
+    public static function setWaiting($userId, $chatId, $commandKey = 'tolkovanie')
     {
         $pdo = self::get();
         $st = $pdo->prepare("REPLACE INTO state (user_id, chat_id, command_key, created_at) VALUES (?, ?, ?, datetime('now'))");
@@ -68,7 +68,7 @@ class Db
         if (!$row) {
             return false;
         }
-        return isset($row['command_key']) && $row['command_key'] !== '' ? $row['command_key'] : 'son';
+        return isset($row['command_key']) && $row['command_key'] !== '' ? $row['command_key'] : 'tolkovanie';
     }
 
     public static function isWaiting($userId, $chatId)
