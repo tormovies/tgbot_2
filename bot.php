@@ -159,6 +159,12 @@ while (true) {
         $text = trim((string) (isset($msg['text']) ? $msg['text'] : ''));
 
         try {
+            // Любая команда (/) — сбросить ожидание и выйти из зависшего состояния
+            $isCommand = preg_match('/^\/(start|gadat|vopros|nomer|tolkovanie|spravka)(\s|$)/', $text);
+            if ($isCommand) {
+                Db::clearWaiting($userId, $chatId);
+            }
+
             // Обработка ожидаемого ввода
             if (Db::isWaiting($userId, $chatId)) {
                 $waitKey = Db::getWaitingCommandKey($userId, $chatId);
