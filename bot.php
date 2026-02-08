@@ -20,17 +20,7 @@ require __DIR__ . '/lib/Iching.php';
 $tg = new Telegram(BOT_TOKEN);
 $deepseek = new DeepSeek(DEEPSEEK_API_KEY);
 
-try {
-    $tg->setMyCommands(array(
-        'start' => defined('BOT_CMD_START') ? BOT_CMD_START : 'В начало',
-        'gadat' => defined('BOT_CMD_GADAT') ? BOT_CMD_GADAT : 'Предсказание (6 бросков)',
-        'tolkovanie' => defined('BOT_CMD_TOLKOVANIE') ? BOT_CMD_TOLKOVANIE : 'Толкование снов, символов',
-        'nomer' => defined('BOT_CMD_NOMER') ? BOT_CMD_NOMER : 'Толкование по номеру (1–64)',
-    ));
-    echo date('Y-m-d H:i:s') . " setMyCommands OK\n";
-} catch (Exception $e) {
-    echo date('Y-m-d H:i:s') . " setMyCommands FAIL: " . $e->getMessage() . "\n";
-}
+/* Меню команд — настраивается через BotFather. setMyCommands перезаписывает и ломает отображение. */
 
 $offset = null;
 echo "Бот запущен. Ожидание сообщений...\n";
