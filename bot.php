@@ -149,7 +149,7 @@ while (true) {
         $text = trim((string) (isset($msg['text']) ? $msg['text'] : ''));
 
         // Кнопки Reply Keyboard
-        $keyboardMap = array('Гадание' => '/gadat', 'Толкование' => '/tolkovanie', 'По номеру' => '/nomer');
+        $keyboardMap = array('Предсказание 🐲' => '/gadat', 'Толкование снов 🐳' => '/tolkovanie', 'Толкование по цифрам 🪲' => '/nomer');
         if (isset($keyboardMap[$text])) {
             $text = $keyboardMap[$text];
         }
@@ -212,12 +212,17 @@ while (true) {
             if ($text === '/start') {
                 $mainKeyboard = array();
                 if (defined('BOT_KEYBOARD_MAIN')) {
-                    $row = array();
-                    foreach (explode('|', BOT_KEYBOARD_MAIN) as $btn) {
-                        $row[] = array('text' => trim($btn));
-                    }
-                    if (!empty($row)) {
-                        $mainKeyboard[] = $row;
+                    foreach (explode("\n", BOT_KEYBOARD_MAIN) as $line) {
+                        $row = array();
+                        foreach (explode('|', $line) as $btn) {
+                            $t = trim($btn);
+                            if ($t !== '') {
+                                $row[] = array('text' => $t);
+                            }
+                        }
+                        if (!empty($row)) {
+                            $mainKeyboard[] = $row;
+                        }
                     }
                 }
                 $tg->sendMessage($chatId, defined('BOT_MSG_START') ? BOT_MSG_START : 'Привет. Выбери действие.', '', null, $mainKeyboard);
