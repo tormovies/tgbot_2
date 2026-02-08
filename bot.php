@@ -56,8 +56,9 @@ function formatHexagram(array $lines)
 {
     $out = '';
     for ($i = 5; $i >= 0; $i--) {
+        $n = $i + 1;
         $label = $lines[$i] === 'yang' ? 'ян' : 'инь';
-        $out .= formatLine($lines[$i]) . "  {$label}\n";
+        $out .= "{$n}) " . formatLine($lines[$i]) . "  {$label}\n";
     }
     return trim($out);
 }

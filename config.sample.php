@@ -47,7 +47,7 @@ define('BOT_MSG_GADAT_START', 'Для получения гексаграммы 
 define('BOT_MSG_GADAT_BTN_THROW', 'Бросок');
 define('BOT_MSG_GADAT_BTN_NEXT', 'Сделать %d-й бросок');
 define('BOT_MSG_GADAT_LINE_YANG', '———');
-define('BOT_MSG_GADAT_LINE_YIN', '—    —');
+define('BOT_MSG_GADAT_LINE_YIN', '—      —');  // 6 пробелов между чёрточками
 define('BOT_MSG_GADAT_LOOKUP', 'Ищем толкование…');
 
 define('ADMIN_LOGIN', 'admin');
