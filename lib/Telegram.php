@@ -87,6 +87,16 @@ class Telegram
         return $this->request('answerCallbackQuery', array('callback_query_id' => $callbackQueryId));
     }
 
+    /** Устанавливает меню команд (видны при нажатии / или меню). */
+    public function setMyCommands(array $commands)
+    {
+        $list = array();
+        foreach ($commands as $cmd => $desc) {
+            $list[] = array('command' => $cmd, 'description' => $desc);
+        }
+        return $this->request('setMyCommands', array('commands' => $list));
+    }
+
     private function splitText($text, $maxLen)
     {
         if (mb_strlen($text) <= $maxLen) {
