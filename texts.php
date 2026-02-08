@@ -67,3 +67,11 @@ if (!defined('BOT_MSG_GADAT_LOOKUP')) {
 if (!defined('BOT_KEYBOARD_MAIN')) {
     define('BOT_KEYBOARD_MAIN', 'Гадание|Толкование|По номеру');
 }
+
+// Меню команд (setMyCommands) — описания в меню «/», не путать с кнопками BOT_KEYBOARD_MAIN
+if (!defined('BOT_CMD_GADAT')) define('BOT_CMD_GADAT', 'Предсказание (6 бросков)');
+if (!defined('BOT_CMD_NOMER')) define('BOT_CMD_NOMER', 'Толкование по номеру (1–64)');
+if (!defined('BOT_CMD_TOLKOVANIE')) define('BOT_CMD_TOLKOVANIE', 'Толкование снов, символов');
+if (!defined('BOT_CMD_SPRAVKA')) define('BOT_CMD_SPRAVKA', 'Справка по командам');
+if (!defined('BOT_CMD_START')) define('BOT_CMD_START', 'В начало');
+if (!defined('BOT_CMD_VOPROS')) define('BOT_CMD_VOPROS', 'Задать вопрос');

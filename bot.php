@@ -22,12 +22,12 @@ $deepseek = new DeepSeek(DEEPSEEK_API_KEY);
 
 try {
     $tg->setMyCommands(array(
-        'gadat' => 'Гадание (6 бросков)',
-        'vopros' => 'Задать вопрос',
-        'nomer' => 'Толкование по номеру (1–64)',
-        'tolkovanie' => 'Толкование снов, ситуаций',
-        'spravka' => 'Справка по командам',
-        'start' => 'В начало',
+        'gadat' => defined('BOT_CMD_GADAT') ? BOT_CMD_GADAT : 'Гадание',
+        'vopros' => defined('BOT_CMD_VOPROS') ? BOT_CMD_VOPROS : 'Вопрос',
+        'nomer' => defined('BOT_CMD_NOMER') ? BOT_CMD_NOMER : 'По номеру',
+        'tolkovanie' => defined('BOT_CMD_TOLKOVANIE') ? BOT_CMD_TOLKOVANIE : 'Толкование',
+        'spravka' => defined('BOT_CMD_SPRAVKA') ? BOT_CMD_SPRAVKA : 'Справка',
+        'start' => defined('BOT_CMD_START') ? BOT_CMD_START : 'В начало',
     ));
 } catch (Exception $e) {
     /* игнор */
