@@ -33,7 +33,8 @@ function formatGadatLines(array $lines)
     $out = '';
     foreach ($lines as $i => $line) {
         $n = $i + 1;
-        $out .= "{$n}) " . formatLine($line) . "\n";
+        $label = $line === 'yang' ? 'ян' : 'инь';
+        $out .= "{$n}) " . formatLine($line) . "  {$label}\n";
     }
     return trim($out);
 }
@@ -42,7 +43,8 @@ function formatHexagram(array $lines)
 {
     $out = '';
     for ($i = 5; $i >= 0; $i--) {
-        $out .= formatLine($lines[$i]) . "\n";
+        $label = $lines[$i] === 'yang' ? 'ян' : 'инь';
+        $out .= formatLine($lines[$i]) . "  {$label}\n";
     }
     return trim($out);
 }
