@@ -27,8 +27,9 @@ try {
         'tolkovanie' => defined('BOT_CMD_TOLKOVANIE') ? BOT_CMD_TOLKOVANIE : 'Толкование снов, символов',
         'nomer' => defined('BOT_CMD_NOMER') ? BOT_CMD_NOMER : 'Толкование по номеру (1–64)',
     ));
+    echo date('Y-m-d H:i:s') . " setMyCommands OK\n";
 } catch (Exception $e) {
-    /* игнор */
+    echo date('Y-m-d H:i:s') . " setMyCommands FAIL: " . $e->getMessage() . "\n";
 }
 
 $offset = null;
