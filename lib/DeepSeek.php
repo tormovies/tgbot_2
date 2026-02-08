@@ -16,23 +16,15 @@ class DeepSeek
      * Запрос к DeepSeek. $userContent — текст пользователя, $promptKey — ключ команды (gadat, vopros, nomer, tolkovanie).
      */
     /**
-     * Гадание по гексаграмме. $lines — массив ["yin"|"yang"] от линии 1 (нижней) до 6 (верхней).
+     * Гадание по гексаграмме. $lines — массив ["yin"|"yang"], номер вычисляется по King Wen.
      */
-    public function askHexagram(array $lines, $castingTime = null)
+    public function askHexagram(array $lines)
     {
-        if ($castingTime === null) {
-            $castingTime = date('c');
+        $number = class_exists('Iching') ? Iching::hexagramNumber($lines) : 0;
+        if ($number < 1 || $number > 64) {
+            throw new RuntimeException("Не удалось определить номер гексаграммы");
         }
-        $ichingRequest = array(
-            'iching_request' => array(
-                'hexagram' => array(
-                    'lines' => $lines,
-                    'order' => 'bottom_to_top',
-                ),
-                'response_format' => array('language' => 'ru'),
-            ),
-        );
-        $userContent = json_encode($ichingRequest, JSON_UNESCAPED_UNICODE);
+        $userContent = json_encode(array('hexagram' => $number), JSON_UNESCAPED_UNICODE);
         return $this->ask($userContent, 'gadat');
     }
 

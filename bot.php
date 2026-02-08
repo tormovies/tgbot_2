@@ -14,22 +14,10 @@ require $config;
 require __DIR__ . '/lib/Db.php';
 require __DIR__ . '/lib/Telegram.php';
 require __DIR__ . '/lib/DeepSeek.php';
+require __DIR__ . '/lib/Iching.php';
 
 $tg = new Telegram(BOT_TOKEN);
 $deepseek = new DeepSeek(DEEPSEEK_API_KEY);
-
-try {
-    $tg->setMyCommands(array(
-        'start' => 'В начало',
-        'gadat' => 'Гадание (6 бросков)',
-        'vopros' => 'Задать вопрос',
-        'nomer' => 'Толкование по номеру (1–64)',
-        'tolkovanie' => 'Толкование снов, ситуаций',
-        'spravka' => 'Справка по командам',
-    ));
-} catch (Exception $e) {
-    /* игнор */
-}
 
 $offset = null;
 echo "Бот запущен. Ожидание сообщений...\n";
@@ -115,7 +103,11 @@ while (true) {
                     }
                 } else {
                     Db::clearWaiting($userId, $chatId);
+                    $hexNum = Iching::hexagramNumber($lines);
                     $hexagramText = formatHexagram($lines);
+                    if ($hexNum > 0) {
+                        $hexagramText = "Гексаграмма №{$hexNum}\n\n" . $hexagramText;
+                    }
                     try {
                         $tg->editMessageText($chatId, $messageId, $hexagramText, array());
                     } catch (Exception $e) {
@@ -125,7 +117,7 @@ while (true) {
                     $tg->sendMessage($chatId, $lookupMsg);
                     $chatType = isset($callback['message']['chat']['type']) ? $callback['message']['chat']['type'] : 'private';
                     try {
-                        echo date('Y-m-d H:i:s') . " [OK] /gadat от user_id=$userId, DeepSeek...\n";
+                        echo date('Y-m-d H:i:s') . " [OK] /gadat от user_id=$userId, гексаграмма №{$hexNum}, DeepSeek...\n";
                         $interpretation = $deepseek->askHexagram($lines);
                         Db::addLog($userId, $username, $chatId, $chatType, 'gadat ' . json_encode($lines), $interpretation);
                         $tg->sendMessage($userId, $interpretation);
