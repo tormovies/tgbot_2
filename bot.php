@@ -22,12 +22,12 @@ $deepseek = new DeepSeek(DEEPSEEK_API_KEY);
 
 try {
     $tg->setMyCommands(array(
-        'start' => 'В начало',
         'gadat' => 'Гадание (6 бросков)',
         'vopros' => 'Задать вопрос',
         'nomer' => 'Толкование по номеру (1–64)',
         'tolkovanie' => 'Толкование снов, ситуаций',
         'spravka' => 'Справка по командам',
+        'start' => 'В начало',
     ));
 } catch (Exception $e) {
     /* игнор */

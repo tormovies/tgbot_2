@@ -63,7 +63,7 @@ if (!defined('BOT_MSG_GADAT_LOOKUP')) {
     define('BOT_MSG_GADAT_LOOKUP', 'Ищем толкование…');
 }
 
-// Reply Keyboard: кнопки для главной (Гадание, Толкование, По номеру)
+// Reply Keyboard: кнопки для главной
 if (!defined('BOT_KEYBOARD_MAIN')) {
     define('BOT_KEYBOARD_MAIN', 'Гадание|Толкование|По номеру');
 }
