@@ -223,8 +223,12 @@ while (true) {
             if ($text === '/start') {
                 $mainKeyboard = array();
                 if (defined('BOT_KEYBOARD_MAIN')) {
+                    $row = array();
                     foreach (explode('|', BOT_KEYBOARD_MAIN) as $btn) {
-                        $mainKeyboard[] = array(array('text' => trim($btn)));
+                        $row[] = array('text' => trim($btn));
+                    }
+                    if (!empty($row)) {
+                        $mainKeyboard[] = $row;
                     }
                 }
                 $tg->sendMessage($chatId, defined('BOT_MSG_START') ? BOT_MSG_START : 'Привет. Выбери действие.', '', null, $mainKeyboard);
