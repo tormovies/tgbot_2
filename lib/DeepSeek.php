@@ -25,7 +25,10 @@ class DeepSeek
         }
         $ichingRequest = array(
             'iching_request' => array(
-                'hexagram_data' => array('lines' => $lines),
+                'hexagram' => array(
+                    'lines' => $lines,
+                    'order' => 'bottom_to_top',
+                ),
                 'response_format' => array('language' => 'ru'),
             ),
         );
