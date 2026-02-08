@@ -71,6 +71,7 @@ class Telegram
                 $params['reply_markup'] = json_encode(array(
                     'keyboard' => $replyKeyboard,
                     'resize_keyboard' => true,
+                    'one_time_keyboard' => true,
                 ));
             }
             $last = $this->request('sendMessage', $params);
