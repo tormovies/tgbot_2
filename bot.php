@@ -11,6 +11,7 @@ if (!is_file($config)) {
     exit(1);
 }
 require $config;
+require __DIR__ . '/texts.php';
 require __DIR__ . '/lib/Db.php';
 require __DIR__ . '/lib/Telegram.php';
 require __DIR__ . '/lib/DeepSeek.php';
@@ -158,6 +159,12 @@ while (true) {
         $username = isset($msg['from']['username']) ? $msg['from']['username'] : null;
         $text = trim((string) (isset($msg['text']) ? $msg['text'] : ''));
 
+        // Кнопки Reply Keyboard
+        $keyboardMap = array('Гадание' => '/gadat', 'Толкование' => '/tolkovanie', 'По номеру' => '/nomer');
+        if (isset($keyboardMap[$text])) {
+            $text = $keyboardMap[$text];
+        }
+
         try {
             // Любая команда (/) — сбросить ожидание и выйти из зависшего состояния
             $isCommand = preg_match('/^\/(start|gadat|vopros|nomer|tolkovanie|spravka)(\s|$)/', $text);
@@ -214,7 +221,13 @@ while (true) {
 
             // Команды
             if ($text === '/start') {
-                $tg->sendMessage($chatId, defined('BOT_MSG_START') ? BOT_MSG_START : 'Привет. /spravka — список команд.');
+                $mainKeyboard = array();
+                if (defined('BOT_KEYBOARD_MAIN')) {
+                    foreach (explode('|', BOT_KEYBOARD_MAIN) as $btn) {
+                        $mainKeyboard[] = array(array('text' => trim($btn)));
+                    }
+                }
+                $tg->sendMessage($chatId, defined('BOT_MSG_START') ? BOT_MSG_START : 'Привет. Выбери действие.', '', null, $mainKeyboard);
                 continue;
             }
             if ($text === '/spravka') {

@@ -54,7 +54,7 @@ class Telegram
 
     const MAX_MESSAGE_LENGTH = 4096;
 
-    public function sendMessage($chatId, $text, $parseMode = '', $inlineKeyboard = null)
+    public function sendMessage($chatId, $text, $parseMode = '', $inlineKeyboard = null, $replyKeyboard = null)
     {
         $text = str_replace("\\n", "\n", $text);
         $chunks = $this->splitText($text, self::MAX_MESSAGE_LENGTH);
@@ -67,6 +67,11 @@ class Telegram
             }
             if ($inlineKeyboard !== null && $isFirst && count($chunks) === 1) {
                 $params['reply_markup'] = json_encode(array('inline_keyboard' => $inlineKeyboard));
+            } elseif ($replyKeyboard !== null && $isFirst && count($chunks) === 1) {
+                $params['reply_markup'] = json_encode(array(
+                    'keyboard' => $replyKeyboard,
+                    'resize_keyboard' => true,
+                ));
             }
             $last = $this->request('sendMessage', $params);
             $isFirst = false;
