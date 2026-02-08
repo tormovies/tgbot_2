@@ -54,19 +54,37 @@ class Telegram
 
     const MAX_MESSAGE_LENGTH = 4096;
 
-    public function sendMessage($chatId, $text, $parseMode = '')
+    public function sendMessage($chatId, $text, $parseMode = '', $inlineKeyboard = null)
     {
         $text = str_replace("\\n", "\n", $text);
         $chunks = $this->splitText($text, self::MAX_MESSAGE_LENGTH);
         $last = null;
+        $isFirst = true;
         foreach ($chunks as $chunk) {
             $params = array('chat_id' => $chatId, 'text' => $chunk);
             if ($parseMode !== '') {
                 $params['parse_mode'] = $parseMode;
             }
+            if ($inlineKeyboard !== null && $isFirst && count($chunks) === 1) {
+                $params['reply_markup'] = json_encode(array('inline_keyboard' => $inlineKeyboard));
+            }
             $last = $this->request('sendMessage', $params);
+            $isFirst = false;
         }
         return $last;
+    }
+
+    public function editMessageText($chatId, $messageId, $text, $inlineKeyboard = null)
+    {
+        $text = str_replace("\\n", "\n", $text);
+        $params = array('chat_id' => $chatId, 'message_id' => $messageId, 'text' => $text);
+        $params['reply_markup'] = json_encode(array('inline_keyboard' => $inlineKeyboard !== null ? $inlineKeyboard : array()));
+        return $this->request('editMessageText', $params);
+    }
+
+    public function answerCallbackQuery($callbackQueryId)
+    {
+        return $this->request('answerCallbackQuery', array('callback_query_id' => $callbackQueryId));
     }
 
     private function splitText($text, $maxLen)

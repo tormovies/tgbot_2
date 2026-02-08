@@ -21,6 +21,32 @@ $deepseek = new DeepSeek(DEEPSEEK_API_KEY);
 $offset = null;
 echo "Бот запущен. Ожидание сообщений...\n";
 
+function formatLine($yangOrYin)
+{
+    return $yangOrYin === 'yang' 
+        ? (defined('BOT_MSG_GADAT_LINE_YANG') ? BOT_MSG_GADAT_LINE_YANG : '———')
+        : (defined('BOT_MSG_GADAT_LINE_YIN') ? BOT_MSG_GADAT_LINE_YIN : '— —');
+}
+
+function formatGadatLines(array $lines)
+{
+    $out = '';
+    foreach ($lines as $i => $line) {
+        $n = $i + 1;
+        $out .= "{$n}) " . formatLine($line) . "\n";
+    }
+    return trim($out);
+}
+
+function formatHexagram(array $lines)
+{
+    $out = '';
+    for ($i = 5; $i >= 0; $i--) {
+        $out .= formatLine($lines[$i]) . "\n";
+    }
+    return trim($out);
+}
+
 while (true) {
     try {
         $updates = $tg->getUpdates($offset, 30);
@@ -32,6 +58,74 @@ while (true) {
 
     foreach ($updates as $u) {
         $offset = (isset($u['update_id']) ? $u['update_id'] : 0) + 1;
+
+        // Обработка callback (inline-кнопки)
+        $callback = isset($u['callback_query']) ? $u['callback_query'] : null;
+        if ($callback) {
+            $chatId = (int) $callback['message']['chat']['id'];
+            $messageId = (int) $callback['message']['message_id'];
+            $userId = (int) $callback['from']['id'];
+            $username = isset($callback['from']['username']) ? $callback['from']['username'] : null;
+            $data = isset($callback['data']) ? $callback['data'] : '';
+            $callbackId = isset($callback['id']) ? $callback['id'] : '';
+
+            try {
+                $tg->answerCallbackQuery($callbackId);
+            } catch (Exception $e) {
+                /* игнор */
+            }
+
+            if ($data === 'gadat_throw') {
+                $state = Db::getStateData($userId, $chatId);
+                $isGadat = Db::getWaitingCommandKey($userId, $chatId) === 'gadat';
+                if (!$isGadat || !is_array($state) || !isset($state['lines'])) {
+                    continue;
+                }
+                $lines = $state['lines'];
+                $nextThrow = count($lines) + 1;
+                $line = mt_rand(0, 1) ? 'yang' : 'yin';
+                $lines[] = $line;
+
+                if (count($lines) < 6) {
+                    Db::setWaiting($userId, $chatId, 'gadat', array('lines' => $lines));
+                    $text = formatGadatLines($lines);
+                    $btnNum = $nextThrow + 1;
+                    $btnText = defined('BOT_MSG_GADAT_BTN_NEXT') ? sprintf(BOT_MSG_GADAT_BTN_NEXT, $btnNum) : "Сделать {$btnNum}-й бросок";
+                    $keyboard = array(array(array('text' => $btnText, 'callback_data' => 'gadat_throw')));
+                    try {
+                        $tg->editMessageText($chatId, $messageId, $text, $keyboard);
+                    } catch (Exception $e) {
+                        echo date('Y-m-d H:i:s') . " [ОШИБКА] editMessage: " . $e->getMessage() . "\n";
+                    }
+                } else {
+                    Db::clearWaiting($userId, $chatId);
+                    $hexagramText = formatHexagram($lines);
+                    try {
+                        $tg->editMessageText($chatId, $messageId, $hexagramText, array());
+                    } catch (Exception $e) {
+                        echo date('Y-m-d H:i:s') . " [ОШИБКА] editMessage: " . $e->getMessage() . "\n";
+                    }
+                    $lookupMsg = defined('BOT_MSG_GADAT_LOOKUP') ? BOT_MSG_GADAT_LOOKUP : 'Ищем толкование…';
+                    $tg->sendMessage($chatId, $lookupMsg);
+                    $chatType = isset($callback['message']['chat']['type']) ? $callback['message']['chat']['type'] : 'private';
+                    try {
+                        echo date('Y-m-d H:i:s') . " [OK] /gadat от user_id=$userId, DeepSeek...\n";
+                        $interpretation = $deepseek->askHexagram($lines);
+                        Db::addLog($userId, $username, $chatId, $chatType, 'gadat ' . json_encode($lines), $interpretation);
+                        $tg->sendMessage($userId, $interpretation);
+                        if ($chatId !== $userId) {
+                            $tg->sendMessage($chatId, defined('BOT_MSG_SENT_TO_DM') ? BOT_MSG_SENT_TO_DM : 'Толкование отправлено в личные сообщения.');
+                        }
+                    } catch (Exception $e) {
+                        echo date('Y-m-d H:i:s') . " [ОШИБКА] " . $e->getMessage() . "\n";
+                        $tg->sendMessage($chatId, defined('BOT_MSG_ERROR') ? BOT_MSG_ERROR : 'Произошла ошибка, попробуй позже.');
+                    }
+                }
+            }
+            continue;
+        }
+
+        // Обработка сообщений
         $msg = isset($u['message']) ? $u['message'] : null;
         if (!$msg) {
             continue;
@@ -47,6 +141,9 @@ while (true) {
             // Обработка ожидаемого ввода
             if (Db::isWaiting($userId, $chatId)) {
                 $waitKey = Db::getWaitingCommandKey($userId, $chatId);
+                if ($waitKey === 'gadat') {
+                    continue;
+                }
                 if ($text === '') {
                     $msgMap = array(
                         'vopros' => 'BOT_MSG_SEND_VOPROS',
@@ -99,15 +196,11 @@ while (true) {
             }
 
             if ($text === '/gadat') {
-                $hexNum = mt_rand(1, 64);
-                echo date('Y-m-d H:i:s') . " [OK] /gadat от user_id=$userId, выпало №{$hexNum}\n";
-                $userContent = "Выпала гексаграмма №{$hexNum}.";
-                $interpretation = $deepseek->ask($userContent, 'gadat');
-                Db::addLog($userId, $username, $chatId, $chatType, "gadat (гексаграмма {$hexNum})", $interpretation);
-                $tg->sendMessage($userId, $interpretation);
-                if ($chatId !== $userId) {
-                    $tg->sendMessage($chatId, defined('BOT_MSG_SENT_TO_DM') ? BOT_MSG_SENT_TO_DM : 'Толкование отправлено в личные сообщения.');
-                }
+                Db::setWaiting($userId, $chatId, 'gadat', array('lines' => array()));
+                $startText = defined('BOT_MSG_GADAT_START') ? BOT_MSG_GADAT_START : 'Для получения гексаграммы нужно сделать 6 бросков.';
+                $btnText = defined('BOT_MSG_GADAT_BTN_THROW') ? BOT_MSG_GADAT_BTN_THROW : 'Бросок';
+                $keyboard = array(array(array('text' => $btnText, 'callback_data' => 'gadat_throw')));
+                $tg->sendMessage($chatId, $startText, '', $keyboard);
                 continue;
             }
 

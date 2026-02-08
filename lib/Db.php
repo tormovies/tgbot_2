@@ -49,13 +49,19 @@ class Db
         } catch (Exception $e) {
             /* колонка уже есть */
         }
+        try {
+            $pdo->exec("ALTER TABLE state ADD COLUMN state_data TEXT");
+        } catch (Exception $e) {
+            /* колонка уже есть */
+        }
     }
 
-    public static function setWaiting($userId, $chatId, $commandKey = 'tolkovanie')
+    public static function setWaiting($userId, $chatId, $commandKey = 'tolkovanie', $stateData = null)
     {
         $pdo = self::get();
-        $st = $pdo->prepare("REPLACE INTO state (user_id, chat_id, command_key, created_at) VALUES (?, ?, ?, datetime('now'))");
-        $st->execute(array($userId, $chatId, $commandKey));
+        $dataJson = $stateData !== null ? json_encode($stateData) : null;
+        $st = $pdo->prepare("REPLACE INTO state (user_id, chat_id, command_key, state_data, created_at) VALUES (?, ?, ?, ?, datetime('now'))");
+        $st->execute(array($userId, $chatId, $commandKey, $dataJson));
     }
 
     /** Возвращает ключ команды (son, mood, …) или false, если не ждём ввод. */
@@ -69,6 +75,19 @@ class Db
             return false;
         }
         return isset($row['command_key']) && $row['command_key'] !== '' ? $row['command_key'] : 'tolkovanie';
+    }
+
+    public static function getStateData($userId, $chatId)
+    {
+        $pdo = self::get();
+        $st = $pdo->prepare("SELECT state_data FROM state WHERE user_id = ? AND chat_id = ?");
+        $st->execute(array($userId, $chatId));
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$row || $row['state_data'] === null || $row['state_data'] === '') {
+            return null;
+        }
+        $data = json_decode($row['state_data'], true);
+        return is_array($data) ? $data : null;
     }
 
     public static function isWaiting($userId, $chatId)

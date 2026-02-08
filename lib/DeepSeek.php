@@ -15,6 +15,24 @@ class DeepSeek
     /**
      * Запрос к DeepSeek. $userContent — текст пользователя, $promptKey — ключ команды (gadat, vopros, nomer, tolkovanie).
      */
+    /**
+     * Гадание по гексаграмме. $lines — массив ["yin"|"yang"] от линии 1 (нижней) до 6 (верхней).
+     */
+    public function askHexagram(array $lines, $castingTime = null)
+    {
+        if ($castingTime === null) {
+            $castingTime = date('c');
+        }
+        $ichingRequest = array(
+            'iching_request' => array(
+                'hexagram_data' => array('lines' => $lines),
+                'response_format' => array('language' => 'ru'),
+            ),
+        );
+        $userContent = json_encode($ichingRequest, JSON_UNESCAPED_UNICODE);
+        return $this->ask($userContent, 'gadat');
+    }
+
     public function ask($userContent, $promptKey = 'tolkovanie')
     {
         foreach (array(0, 1) as $attempt) {
