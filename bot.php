@@ -84,7 +84,24 @@ while (true) {
                 /* игнор */
             }
 
-            if ($data === 'gadat_throw') {
+            if (in_array($data, array('menu_gadat', 'menu_tolkovanie', 'menu_nomer'))) {
+                $dmChatId = $userId;
+                if ($data === 'menu_gadat') {
+                    Db::setWaiting($userId, $dmChatId, 'gadat', array('lines' => array()));
+                    $startText = defined('BOT_MSG_GADAT_START') ? BOT_MSG_GADAT_START : 'Гексаграмма состоит из 6 линий.';
+                    $btnText = defined('BOT_MSG_GADAT_BTN_THROW') ? BOT_MSG_GADAT_BTN_THROW : 'Бросок';
+                    $tg->sendMessage($dmChatId, $startText, '', array(array(array('text' => $btnText, 'callback_data' => 'gadat_throw'))));
+                } elseif ($data === 'menu_tolkovanie') {
+                    Db::setWaiting($userId, $dmChatId, 'tolkovanie');
+                    $tg->sendMessage($dmChatId, defined('BOT_MSG_AFTER_TOLKOVANIE') ? BOT_MSG_AFTER_TOLKOVANIE : 'Опиши сон, ситуацию или символы.');
+                } else {
+                    Db::setWaiting($userId, $dmChatId, 'nomer');
+                    $tg->sendMessage($dmChatId, defined('BOT_MSG_AFTER_NOMER') ? BOT_MSG_AFTER_NOMER : 'Напиши номер гексаграммы (1–64).');
+                }
+                if ($chatId !== $dmChatId) {
+                    $tg->sendMessage($chatId, defined('BOT_MSG_SENT_TO_DM') ? BOT_MSG_SENT_TO_DM : 'Продолжение в личных сообщениях.');
+                }
+            } elseif ($data === 'gadat_throw') {
                 $state = Db::getStateData($userId, $chatId);
                 $isGadat = Db::getWaitingCommandKey($userId, $chatId) === 'gadat';
                 if (!$isGadat || !is_array($state) || !isset($state['lines'])) {
@@ -158,7 +175,7 @@ while (true) {
 
         try {
             // Любая команда (/) — сбросить ожидание и выйти из зависшего состояния
-            $isCommand = preg_match('/^\/(start|gadat|vopros|nomer|tolkovanie|spravka)(\s|$)/', $text);
+            $isCommand = preg_match('/^\/(start|gadat|vopros|nomer|tolkovanie|spravka|post_menu|chat_id)(\s|$)/', $text);
             if ($isCommand) {
                 Db::clearWaiting($userId, $chatId);
             }
@@ -236,6 +253,32 @@ while (true) {
             }
             if (preg_match('/^\/chat_id(@\w+)?$/i', $text)) {
                 $tg->sendMessage($chatId, "chat_id этого чата: {$chatId}");
+                continue;
+            }
+            if (preg_match('/^\/post_menu(@\w+)?$/i', $text)) {
+                $groupChatId = defined('GROUP_CHAT_ID') ? GROUP_CHAT_ID : null;
+                if (empty($groupChatId)) {
+                    $tg->sendMessage($chatId, 'GROUP_CHAT_ID не задан в config. Узнай chat_id: /chat_id в группе, добавь в config.');
+                    continue;
+                }
+                $postText = defined('BOT_MSG_GROUP_POST') ? BOT_MSG_GROUP_POST : 'Добро пожаловать!';
+                $inlineKb = array();
+                if (defined('BOT_GROUP_BUTTONS')) {
+                    foreach (explode("\n", BOT_GROUP_BUTTONS) as $line) {
+                        $line = trim($line);
+                        if ($line === '') continue;
+                        $p = strpos($line, '|');
+                        if ($p !== false) {
+                            $btnText = trim(substr($line, 0, $p));
+                            $url = trim(substr($line, $p + 1));
+                            if ($btnText !== '' && $url !== '') {
+                                $inlineKb[] = array(array('text' => $btnText, 'url' => $url));
+                            }
+                        }
+                    }
+                }
+                $tg->sendMessage($groupChatId, $postText, '', !empty($inlineKb) ? $inlineKb : null);
+                $tg->sendMessage($chatId, 'Сообщение отправлено в группу. Закрепи его.');
                 continue;
             }
 
