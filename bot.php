@@ -54,7 +54,9 @@ function formatHexagram(array $lines)
     return trim($out);
 }
 
+$heartbeatFile = (defined('DATA_DIR') ? DATA_DIR : __DIR__ . '/data') . '/heartbeat';
 while (true) {
+    @file_put_contents($heartbeatFile, (string) time());
     try {
         $updates = $tg->getUpdates($offset, 30);
     } catch (Exception $e) {
