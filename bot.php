@@ -234,6 +234,10 @@ while (true) {
                 $tg->sendMessage($chatId, defined('BOT_MSG_SPRAVKA') ? BOT_MSG_SPRAVKA : '/gadat, /vopros, /nomer, /tolkovanie');
                 continue;
             }
+            if (preg_match('/^\/chat_id(@\w+)?$/i', $text)) {
+                $tg->sendMessage($chatId, "chat_id этого чата: {$chatId}");
+                continue;
+            }
 
             if ($text === '/gadat') {
                 Db::setWaiting($userId, $chatId, 'gadat', array('lines' => array()));
