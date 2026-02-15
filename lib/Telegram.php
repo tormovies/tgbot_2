@@ -54,7 +54,7 @@ class Telegram
 
     const MAX_MESSAGE_LENGTH = 4096;
 
-    public function sendMessage($chatId, $text, $parseMode = '', $inlineKeyboard = null, $replyKeyboard = null)
+    public function sendMessage($chatId, $text, $parseMode = '', $inlineKeyboard = null, $replyKeyboard = null, $disableLinkPreview = false)
     {
         $text = str_replace("\\n", "\n", $text);
         $chunks = $this->splitText($text, self::MAX_MESSAGE_LENGTH);
@@ -64,6 +64,9 @@ class Telegram
             $params = array('chat_id' => $chatId, 'text' => $chunk);
             if ($parseMode !== '') {
                 $params['parse_mode'] = $parseMode;
+            }
+            if ($disableLinkPreview) {
+                $params['disable_web_page_preview'] = true;
             }
             if ($inlineKeyboard !== null && $isFirst && count($chunks) === 1) {
                 $params['reply_markup'] = json_encode(array('inline_keyboard' => $inlineKeyboard));

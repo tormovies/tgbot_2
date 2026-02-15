@@ -284,7 +284,7 @@ while (true) {
                         }
                     }
                 }
-                $tg->sendMessage($groupChatId, $postText, '', !empty($inlineKb) ? $inlineKb : null);
+                $tg->sendMessage($groupChatId, $postText, 'HTML', !empty($inlineKb) ? $inlineKb : null, null, true);
                 continue;
             }
 
