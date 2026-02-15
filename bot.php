@@ -267,13 +267,20 @@ while (true) {
                     foreach (explode("\n", BOT_GROUP_BUTTONS) as $line) {
                         $line = trim($line);
                         if ($line === '') continue;
-                        $p = strpos($line, '|');
-                        if ($p !== false) {
-                            $btnText = trim(substr($line, 0, $p));
-                            $url = trim(substr($line, $p + 1));
-                            if ($btnText !== '' && $url !== '') {
-                                $inlineKb[] = array(array('text' => $btnText, 'url' => $url));
+                        $row = array();
+                        foreach (explode(';', $line) as $pair) {
+                            $pair = trim($pair);
+                            $p = strpos($pair, '|');
+                            if ($p !== false) {
+                                $btnText = trim(substr($pair, 0, $p));
+                                $url = trim(substr($pair, $p + 1));
+                                if ($btnText !== '' && $url !== '') {
+                                    $row[] = array('text' => $btnText, 'url' => $url);
+                                }
                             }
+                        }
+                        if (!empty($row)) {
+                            $inlineKb[] = $row;
                         }
                     }
                 }
