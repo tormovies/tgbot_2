@@ -285,7 +285,6 @@ while (true) {
                     }
                 }
                 $tg->sendMessage($groupChatId, $postText, '', !empty($inlineKb) ? $inlineKb : null);
-                $tg->sendMessage($chatId, 'Сообщение отправлено в группу. Закрепи его.');
                 continue;
             }
 
