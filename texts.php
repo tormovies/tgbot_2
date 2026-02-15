@@ -45,7 +45,7 @@ if (!defined('BOT_MSG_ERROR')) {
 }
 
 if (!defined('BOT_MSG_GADAT_START')) {
-    define('BOT_MSG_GADAT_START', 'Для получения гексаграммы нужно сделать 6 бросков.');
+    define('BOT_MSG_GADAT_START', "Гексаграмма состоит из 6 линий.\nДля этого сделайте 6 бросков.");
 }
 if (!defined('BOT_MSG_GADAT_BTN_THROW')) {
     define('BOT_MSG_GADAT_BTN_THROW', 'Бросок');
