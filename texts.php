@@ -65,7 +65,7 @@ if (!defined('BOT_MSG_GADAT_LOOKUP')) {
 
 // Reply Keyboard: кнопки для главной
 if (!defined('BOT_KEYBOARD_MAIN')) {
-    define('BOT_KEYBOARD_MAIN', "Предсказание 🐲\nТолкование снов 💫\nТолкование по цифрам 🔢");
+    define('BOT_KEYBOARD_MAIN', "Предсказание 🐲\nТолкование снов 🐳\nТолкование по цифрам 🎲");
 }
 
 // Меню команд (setMyCommands) — описания в меню «/», не путать с кнопками BOT_KEYBOARD_MAIN

@@ -149,7 +149,7 @@ while (true) {
         $text = trim((string) (isset($msg['text']) ? $msg['text'] : ''));
 
         // Кнопки Reply Keyboard
-        $keyboardMap = array('Предсказание 🐲' => '/gadat', 'Толкование снов 🐳' => '/tolkovanie', 'Толкование по цифрам 🪲' => '/nomer');
+        $keyboardMap = array('Предсказание 🐲' => '/gadat', 'Толкование снов 🐳' => '/tolkovanie', 'Толкование по цифрам 🎲' => '/nomer');
         if (isset($keyboardMap[$text])) {
             $text = $keyboardMap[$text];
         }
