@@ -78,16 +78,17 @@ if (!defined('BOT_MSG_GROUP_POST')) {
 }
 // Кнопки для группового поста: каждая строка = "текст кнопки|url"
 if (!defined('BOT_GROUP_BUTTONS')) {
-    define('BOT_GROUP_BUTTONS', "☑️ Карта игры|https://t.me/zivilel/50;☑️ Правила игры|https://t.me/zivilel/45\n
-☑️ Задания|https://t.me/zivilel/49;☑️ Терминология снов|https://t.me/zivilel/74\n
-☑️ Признаки снов|https://t.me/zivilel/142;☑️ Сталкинг и задания|https://t.me/zivilel/123\n
-☑️ Предсказание по «Книге Перемен»|https://t.me/Trigram_bot\n
-☑️ Толкование снов|https://t.me/zivilel_bot\n
-☑️ Видео-уроки|https://t.me/zivilel/413;☑️ Мистические поездки|https://t.me/mistic_alianna\n
-☑️ Практики входа в осознанный сон|https://t.me/zivilel/337\n
-☑️ Курсы по снам (октябрь 2026)|https://t.me/zivilel/108");
+    define('BOT_GROUP_BUTTONS', "Карта игры|https://t.me/zivilel/50;Правила игры|https://t.me/zivilel/45\n
+Задания|https://t.me/zivilel/49;Сталкинг|https://t.me/zivilel/123\n
+Курсы|https://t.me/zivilel/108;Видео-уроки|https://t.me/zivilel/413\n
+Предсказание по «Книге Перемен»|https://t.me/Trigram_bot\n
+Толкование снов|https://t.me/zivilel_bot\n
+Практики входа в осознанный сон|https://t.me/zivilel/337\n
+Терминология снов|https://t.me/zivilel/74\n
+Мистические поездки|https://t.me/mistic_alianna\n");
 }
 
+// Признаки снов|https://t.me/zivilel/142\n
 // Меню команд (setMyCommands) — описания в меню «/», не путать с кнопками BOT_KEYBOARD_MAIN
 if (!defined('BOT_CMD_GADAT')) define('BOT_CMD_GADAT', 'Предсказание (6 бросков)');
 if (!defined('BOT_CMD_NOMER')) define('BOT_CMD_NOMER', 'Толкование по номеру (1–64)');
