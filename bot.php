@@ -175,7 +175,7 @@ while (true) {
 
         try {
             // Любая команда (/) — сбросить ожидание и выйти из зависшего состояния
-            $isCommand = preg_match('/^\/(start|gadat|vopros|nomer|tolkovanie|spravka|post_menu|chat_id)(\s|$)/', $text);
+            $isCommand = preg_match('/^\/(start|gadat|vopros|nomer|tolkovanie|spravka|post_menu|chat_id)(@\w+)?(\s|$)/', $text);
             if ($isCommand) {
                 Db::clearWaiting($userId, $chatId);
             }
@@ -228,7 +228,7 @@ while (true) {
             }
 
             // Команды
-            if ($text === '/start') {
+            if (preg_match('/^\/start(@\w+)?$/i', $text)) {
                 $mainKeyboard = array();
                 if (defined('BOT_KEYBOARD_MAIN')) {
                     foreach (explode("\n", BOT_KEYBOARD_MAIN) as $line) {
@@ -247,7 +247,7 @@ while (true) {
                 $tg->sendMessage($chatId, defined('BOT_MSG_START') ? BOT_MSG_START : 'Привет. Выбери действие.', '', null, $mainKeyboard);
                 continue;
             }
-            if ($text === '/spravka') {
+            if (preg_match('/^\/spravka(@\w+)?$/i', $text)) {
                 $tg->sendMessage($chatId, defined('BOT_MSG_SPRAVKA') ? BOT_MSG_SPRAVKA : '/gadat, /vopros, /nomer, /tolkovanie');
                 continue;
             }
@@ -288,7 +288,7 @@ while (true) {
                 continue;
             }
 
-            if ($text === '/gadat') {
+            if (preg_match('/^\/gadat(@\w+)?$/i', $text)) {
                 Db::setWaiting($userId, $chatId, 'gadat', array('lines' => array()));
                 $startText = defined('BOT_MSG_GADAT_START') ? BOT_MSG_GADAT_START : 'Для получения гексаграммы нужно сделать 6 бросков.';
                 $btnText = defined('BOT_MSG_GADAT_BTN_THROW') ? BOT_MSG_GADAT_BTN_THROW : 'Бросок';
@@ -297,7 +297,7 @@ while (true) {
                 continue;
             }
 
-            if (preg_match('/^\/nomer\s+(\d+)$/i', $text, $m)) {
+            if (preg_match('/^\/nomer(@\w+)?\s+(\d+)$/i', $text, $m)) {
                 $num = (int) $m[1];
                 if ($num < 1 || $num > 64) {
                     $tg->sendMessage($chatId, defined('BOT_MSG_NOMER_INVALID') ? BOT_MSG_NOMER_INVALID : 'Номер должен быть от 1 до 64.');
@@ -314,19 +314,19 @@ while (true) {
                 continue;
             }
 
-            if ($text === '/nomer') {
+            if (preg_match('/^\/nomer(@\w+)?$/i', $text)) {
                 Db::setWaiting($userId, $chatId, 'nomer');
                 $tg->sendMessage($chatId, defined('BOT_MSG_AFTER_NOMER') ? BOT_MSG_AFTER_NOMER : 'Напиши номер гексаграммы (1–64).');
                 continue;
             }
 
-            if ($text === '/vopros') {
+            if (preg_match('/^\/vopros(@\w+)?$/i', $text)) {
                 Db::setWaiting($userId, $chatId, 'vopros');
                 $tg->sendMessage($chatId, defined('BOT_MSG_AFTER_VOPROS') ? BOT_MSG_AFTER_VOPROS : 'Напиши свой вопрос в следующем сообщении.');
                 continue;
             }
 
-            if ($text === '/tolkovanie') {
+            if (preg_match('/^\/tolkovanie(@\w+)?$/i', $text)) {
                 Db::setWaiting($userId, $chatId, 'tolkovanie');
                 $tg->sendMessage($chatId, defined('BOT_MSG_AFTER_TOLKOVANIE') ? BOT_MSG_AFTER_TOLKOVANIE : 'Опиши сон, ситуацию или символы в следующем сообщении.');
                 continue;
