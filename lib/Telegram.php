@@ -83,6 +83,24 @@ class Telegram
         return $last;
     }
 
+    public function sendPhoto($chatId, $photoUrl, $caption = '', $parseMode = '', $inlineKeyboard = null, $disableLinkPreview = false)
+    {
+        $params = array('chat_id' => $chatId, 'photo' => $photoUrl);
+        if ($caption !== '') {
+            $params['caption'] = $caption;
+        }
+        if ($parseMode !== '') {
+            $params['parse_mode'] = $parseMode;
+        }
+        if ($disableLinkPreview) {
+            $params['disable_web_page_preview'] = true;
+        }
+        if ($inlineKeyboard !== null) {
+            $params['reply_markup'] = json_encode(array('inline_keyboard' => $inlineKeyboard));
+        }
+        return $this->request('sendPhoto', $params);
+    }
+
     public function editMessageText($chatId, $messageId, $text, $inlineKeyboard = null)
     {
         $text = str_replace("\\n", "\n", $text);

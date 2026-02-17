@@ -284,7 +284,13 @@ while (true) {
                         }
                     }
                 }
-                $tg->sendMessage($groupChatId, $postText, 'HTML', !empty($inlineKb) ? $inlineKb : null, null, true);
+                $img = defined('BOT_GROUP_POST_IMAGE') ? BOT_GROUP_POST_IMAGE : '';
+                $kb = !empty($inlineKb) ? $inlineKb : null;
+                if ($img !== '') {
+                    $tg->sendPhoto($groupChatId, $img, $postText, 'HTML', $kb, true);
+                } else {
+                    $tg->sendMessage($groupChatId, $postText, 'HTML', $kb, null, true);
+                }
                 continue;
             }
 

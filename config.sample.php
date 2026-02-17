@@ -15,4 +15,5 @@ define('ADMIN_PASSWORD', '');
 define('DATA_DIR', __DIR__ . '/data');
 define('LOGS_ARCHIVE_AFTER', 1000);
 
-define('GROUP_CHAT_ID', '');  // chat_id группы для меню (пусто = не используется). Узнать: /chat_id в группе.
+define('GROUP_CHAT_ID', '');  // chat_id группы/канала для меню
+define('BOT_GROUP_POST_IMAGE', '');  // URL картинки для поста (пусто = без картинки)
