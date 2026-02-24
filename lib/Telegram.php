@@ -56,8 +56,10 @@ class Telegram
 
     private function logSend($line)
     {
+        $s = date('Y-m-d H:i:s') . ' [send] ' . $line;
         $dir = defined('DATA_DIR') ? DATA_DIR : (__DIR__ . '/../data');
-        @file_put_contents($dir . '/send_debug.log', date('Y-m-d H:i:s') . ' ' . $line . "\n", FILE_APPEND | LOCK_EX);
+        @file_put_contents($dir . '/send_debug.log', $s . "\n", FILE_APPEND | LOCK_EX);
+        error_log($s);
     }
 
     public function sendMessage($chatId, $text, $parseMode = '', $inlineKeyboard = null, $replyKeyboard = null, $disableLinkPreview = false)
