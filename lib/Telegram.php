@@ -52,15 +52,30 @@ class Telegram
         return isset($result['result']) ? $result['result'] : array();
     }
 
-    const MAX_MESSAGE_LENGTH = 4096;
+    const MAX_MESSAGE_LENGTH = 4000;
+
+    private function logSend($line)
+    {
+        $dir = defined('DATA_DIR') ? DATA_DIR : (__DIR__ . '/../data');
+        @file_put_contents($dir . '/send_debug.log', date('Y-m-d H:i:s') . ' ' . $line . "\n", FILE_APPEND | LOCK_EX);
+    }
 
     public function sendMessage($chatId, $text, $parseMode = '', $inlineKeyboard = null, $replyKeyboard = null, $disableLinkPreview = false)
     {
         $text = str_replace("\\n", "\n", $text);
         $chunks = $this->splitText($text, self::MAX_MESSAGE_LENGTH);
+        $numChunks = count($chunks);
+        if ($numChunks > 1) {
+            $this->logSend("sendMessage chat_id={$chatId} chunks={$numChunks} total_len=" . mb_strlen($text));
+        }
         $last = null;
         $isFirst = true;
+        $idx = 0;
         foreach ($chunks as $chunk) {
+            $idx++;
+            if (!$isFirst) {
+                sleep(1);
+            }
             $params = array('chat_id' => $chatId, 'text' => $chunk);
             if ($parseMode !== '') {
                 $params['parse_mode'] = $parseMode;
@@ -68,20 +83,29 @@ class Telegram
             if ($disableLinkPreview) {
                 $params['disable_web_page_preview'] = true;
             }
-            if ($inlineKeyboard !== null && $isFirst && count($chunks) === 1) {
+            if ($inlineKeyboard !== null && $isFirst && $numChunks === 1) {
                 $params['reply_markup'] = json_encode(array('inline_keyboard' => $inlineKeyboard));
-            } elseif ($replyKeyboard !== null && $isFirst && count($chunks) === 1) {
+            } elseif ($replyKeyboard !== null && $isFirst && $numChunks === 1) {
                 $params['reply_markup'] = json_encode(array(
                     'keyboard' => $replyKeyboard,
                     'resize_keyboard' => true,
                     'one_time_keyboard' => true,
                 ));
             }
-            $last = $this->request('sendMessage', $params);
-            $isFirst = false;
-            if (count($chunks) > 1) {
-                usleep(400000);
+            try {
+                $last = $this->request('sendMessage', $params);
+                if ($numChunks > 1) {
+                    $this->logSend("chunk {$idx}/{$numChunks} ok chat_id={$chatId}");
+                }
+            } catch (Exception $e) {
+                if ($numChunks > 1) {
+                    $this->logSend("chunk {$idx}/{$numChunks} FAIL chat_id={$chatId} " . $e->getMessage());
+                    echo date('Y-m-d H:i:s') . " [ОШИБКА] sendMessage chunk: " . $e->getMessage() . "\n";
+                } else {
+                    throw $e;
+                }
             }
+            $isFirst = false;
         }
         return $last;
     }
