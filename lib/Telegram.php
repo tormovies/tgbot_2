@@ -58,30 +58,37 @@ class Telegram
     {
         $s = date('Y-m-d H:i:s') . ' [send] ' . $line . "\n";
         $dir = defined('DATA_DIR') ? DATA_DIR : (__DIR__ . '/../data');
+        @file_put_contents($dir . '/bot.log', $s, FILE_APPEND | LOCK_EX);
         @file_put_contents($dir . '/send_debug.log', $s, FILE_APPEND | LOCK_EX);
-        echo $s;
     }
 
     public function sendMessage($chatId, $text, $parseMode = '', $inlineKeyboard = null, $replyKeyboard = null, $disableLinkPreview = false)
     {
         $text = str_replace("\\n", "\n", $text);
         $len = mb_strlen($text, 'UTF-8');
-        if ($len > self::MAX_MESSAGE_LENGTH) {
-            $this->logSend("sendMessage chat_id={$chatId} long_msg len={$len} bytes=" . strlen($text));
-        }
+        $bytes = strlen($text);
         $chunks = $this->splitText($text, self::MAX_MESSAGE_LENGTH);
         $numChunks = count($chunks);
+
+        $this->logSend("sendMessage start chat_id={$chatId} len={$len} bytes={$bytes} numChunks={$numChunks}");
+
         if ($numChunks > 1) {
-            $this->logSend("sendMessage chat_id={$chatId} chunks={$numChunks} total_len={$len}");
+            foreach ($chunks as $i => $c) {
+                $this->logSend("chunk " . ($i + 1) . "/{$numChunks} part_len=" . mb_strlen($c, 'UTF-8') . " part_bytes=" . strlen($c));
+            }
         }
+
         $last = null;
         $isFirst = true;
         $idx = 0;
+        $sent = 0;
         foreach ($chunks as $chunk) {
             $idx++;
             if (!$isFirst) {
+                $this->logSend("sleep 1s before chunk {$idx}/{$numChunks}");
                 sleep(1);
             }
+            $this->logSend("sending chunk {$idx}/{$numChunks} chat_id={$chatId} len=" . mb_strlen($chunk, 'UTF-8'));
             $params = array('chat_id' => $chatId, 'text' => $chunk);
             if ($parseMode !== '') {
                 $params['parse_mode'] = $parseMode;
@@ -100,19 +107,21 @@ class Telegram
             }
             try {
                 $last = $this->request('sendMessage', $params);
-                if ($numChunks > 1) {
-                    $this->logSend("chunk {$idx}/{$numChunks} ok chat_id={$chatId}");
-                }
+                $sent++;
+                $this->logSend("chunk {$idx}/{$numChunks} ok chat_id={$chatId}");
             } catch (Exception $e) {
+                $err = $e->getMessage();
+                $this->logSend("chunk {$idx}/{$numChunks} FAIL chat_id={$chatId} " . $err);
+                $this->logSend("ОШИБКА sendMessage: " . $err);
                 if ($numChunks > 1) {
-                    $this->logSend("chunk {$idx}/{$numChunks} FAIL chat_id={$chatId} " . $e->getMessage());
-                    echo date('Y-m-d H:i:s') . " [ОШИБКА] sendMessage chunk: " . $e->getMessage() . "\n";
+                    // продолжаем отправлять остальные части
                 } else {
                     throw $e;
                 }
             }
             $isFirst = false;
         }
+        $this->logSend("sendMessage done chat_id={$chatId} sent={$sent}/{$numChunks}");
         return $last;
     }
 
