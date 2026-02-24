@@ -56,19 +56,23 @@ class Telegram
 
     private function logSend($line)
     {
-        $s = date('Y-m-d H:i:s') . ' [send] ' . $line;
+        $s = date('Y-m-d H:i:s') . ' [send] ' . $line . "\n";
         $dir = defined('DATA_DIR') ? DATA_DIR : (__DIR__ . '/../data');
-        @file_put_contents($dir . '/send_debug.log', $s . "\n", FILE_APPEND | LOCK_EX);
-        error_log($s);
+        @file_put_contents($dir . '/send_debug.log', $s, FILE_APPEND | LOCK_EX);
+        echo $s;
     }
 
     public function sendMessage($chatId, $text, $parseMode = '', $inlineKeyboard = null, $replyKeyboard = null, $disableLinkPreview = false)
     {
         $text = str_replace("\\n", "\n", $text);
+        $len = mb_strlen($text, 'UTF-8');
+        if ($len > self::MAX_MESSAGE_LENGTH) {
+            $this->logSend("sendMessage chat_id={$chatId} long_msg len={$len} bytes=" . strlen($text));
+        }
         $chunks = $this->splitText($text, self::MAX_MESSAGE_LENGTH);
         $numChunks = count($chunks);
         if ($numChunks > 1) {
-            $this->logSend("sendMessage chat_id={$chatId} chunks={$numChunks} total_len=" . mb_strlen($text));
+            $this->logSend("sendMessage chat_id={$chatId} chunks={$numChunks} total_len={$len}");
         }
         $last = null;
         $isFirst = true;
@@ -155,23 +159,24 @@ class Telegram
 
     private function splitText($text, $maxLen)
     {
-        if (mb_strlen($text) <= $maxLen) {
+        $enc = 'UTF-8';
+        if (mb_strlen($text, $enc) <= $maxLen) {
             return array($text);
         }
         $chunks = array();
         $rest = $text;
-        while (mb_strlen($rest) > 0) {
-            if (mb_strlen($rest) <= $maxLen) {
+        while (mb_strlen($rest, $enc) > 0) {
+            if (mb_strlen($rest, $enc) <= $maxLen) {
                 $chunks[] = $rest;
                 break;
             }
-            $part = mb_substr($rest, 0, $maxLen);
-            $lastNewline = mb_strrpos($part, "\n");
+            $part = mb_substr($rest, 0, $maxLen, $enc);
+            $lastNewline = mb_strrpos($part, "\n", 0, $enc);
             if ($lastNewline !== false && $lastNewline > $maxLen / 2) {
-                $part = mb_substr($part, 0, $lastNewline + 1);
+                $part = mb_substr($part, 0, $lastNewline + 1, $enc);
             }
             $chunks[] = $part;
-            $rest = mb_substr($rest, mb_strlen($part));
+            $rest = mb_substr($rest, mb_strlen($part, $enc), null, $enc);
         }
         return $chunks;
     }
