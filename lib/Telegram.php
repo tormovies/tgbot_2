@@ -79,6 +79,9 @@ class Telegram
             }
             $last = $this->request('sendMessage', $params);
             $isFirst = false;
+            if (count($chunks) > 1) {
+                usleep(400000);
+            }
         }
         return $last;
     }
