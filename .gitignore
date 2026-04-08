@@ -1,3 +1,4 @@
+.proxy.env
 config.php
 bot.txt
 data/*.sqlite

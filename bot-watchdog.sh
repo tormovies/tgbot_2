@@ -4,6 +4,12 @@
 # Ручной перезапуск: ./bot-watchdog.sh restart
 
 BOT_DIR="/home/admin/domains/website.com.ru/public_html/tgbot99"
+if [ -f "$BOT_DIR/.proxy.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . "$BOT_DIR/.proxy.env"
+    set +a
+fi
 PHP="/usr/local/php83/bin/php"
 LOG="$BOT_DIR/data/bot.log"
 HEARTBEAT="$BOT_DIR/data/heartbeat"
